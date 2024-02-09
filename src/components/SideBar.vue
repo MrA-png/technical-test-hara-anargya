@@ -1,5 +1,3 @@
-perbaiki code berikut menggunakan tailwin ddan vue agar menu navbar atau sidebar bisa responsive atau ketika tampilan kecil maka sidebar akan ditampilan sperti dropdown di dalam icons hambuger
-
 <template>
   <header class="p-8 bg-white shadow-md fixed left-0 top-0 bottom-0 h-full w-full sm:w-64 md:w-72" style="width: 281px;">
     <nav>
