@@ -1,7 +1,23 @@
-<script setup></script>
-
-<template>
-  <div class="text-lg font-bold">Hallo Folks!</div>
+<template >
+  
+  <SideBar />
+  <NavBar />
+  <router-view />
+  
 </template>
 
-<style scoped></style>
+<script>
+import NavBar from "./components/NavBar.vue";
+import SideBar from "./components/SideBar.vue";
+
+export default {
+  components: {
+    SideBar,
+    NavBar,
+  },
+};
+</script>
+
+<style scoped>
+/* Styles for body element */
+</style>
