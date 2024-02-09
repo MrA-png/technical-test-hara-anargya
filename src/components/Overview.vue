@@ -1,105 +1,94 @@
 <template>
-  <div class="container mx-auto" style="margin-left: 18rem;">
-    <!-- Task 1: Menampilkan daftar kota berdasarkan id provinsi -->
-    <div class="mb-8">
-      <h2 class="text-xl font-semibold mb-4">Daftar Kota Berdasarkan Provinsi</h2>
-      <div class="flex flex-wrap">
-        <div v-for="city in getCityListByProvince(selectedProvinceId)" :key="city.id" class="px-4 py-2 bg-gray-100 rounded-lg m-2">
-          {{ city.name }}
-        </div>
-      </div>
+  <div class="container mx-auto p-4" style="margin-left: 18rem;">
+    <h1 class="text-3xl font-semibold mb-4">Data Provinsi dan Kota</h1>
+
+    <!-- Select Provinsi -->
+    <div class="mb-4">
+      <label for="provinsi" class="block font-semibold mb-2">Pilih Provinsi:</label>
+      <select v-model="selectedProvinsi" @change="getKotaByProvinsi" id="provinsi" class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500">
+        <option value="" disabled>Pilih Provinsi</option>
+        <option v-for="provinsi in daftarProvinsi" :value="provinsi.id" :key="provinsi.id">{{ provinsi.name }}</option>
+      </select>
     </div>
 
-    <!-- Task 2: Menampilkan nama provinsi berdasarkan id kota -->
-    <div class="mb-8">
-      <h2 class="text-xl font-semibold mb-4">Nama Provinsi Berdasarkan Kota</h2>
-      <div>
-        <p v-if="selectedCityId">{{ getProvinceNameByCity(selectedCityId) }}</p>
-        <p v-else>Tidak ada kota yang dipilih</p>
-      </div>
+    <!-- List Kota -->
+    <div v-if="selectedProvinsi">
+      <h2 class="text-xl font-semibold mb-2">Daftar Kota di {{ namaProvinsi }}</h2>
+      <ul>
+        <li v-for="kota in daftarKota" :key="kota.id">{{ kota.name }}</li>
+      </ul>
     </div>
 
-    <!-- Task 3: Mengurutkan array provinsi berdasarkan id & nama provinsi (asc/desc) -->
-    <div>
-      <h2 class="text-xl font-semibold mb-4">Urutkan Provinsi</h2>
-      <div class="mb-4">
-        <label for="sortDirection" class="mr-2">Urutkan Berdasarkan:</label>
-        <select v-model="sortDirection" id="sortDirection" class="px-2 py-1 rounded-lg border-gray-300 border">
-          <option value="asc">Asc</option>
-          <option value="desc">Desc</option>
-        </select>
-      </div>
-      <div>
-        <button @click="sortProvinces" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Urutkan</button>
-      </div>
-      <div class="mt-4">
-        <h3 class="text-lg font-semibold">Daftar Provinsi:</h3>
-        <ul>
-          <li v-for="province in sortedProvinces" :key="province.id">{{ province.name }}</li>
-        </ul>
-      </div>
+    <!-- Nama Provinsi berdasarkan ID Kota -->
+    <div v-if="selectedKota">
+      <h2 class="text-xl font-semibold mb-2">Nama Provinsi Berdasarkan ID Kota {{ selectedKota }}</h2>
+      <p>{{ getProvinsiName(selectedKota) }}</p>
     </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
-
 export default {
   data() {
     return {
-      provinces: [],
-      cities: [],
-      selectedProvinceId: null,
-      selectedCityId: null,
-      sortDirection: 'asc'
+      daftarProvinsi: [],
+      daftarKota: [],
+      selectedProvinsi: null,
+      selectedKota: null
     };
   },
+  computed: {
+    namaProvinsi() {
+      const provinsi = this.daftarProvinsi.find(prov => prov.id === this.selectedProvinsi);
+      return provinsi ? provinsi.name : "";
+    }
+  },
   mounted() {
-    this.fetchData();
+    this.fetchDaftarProvinsi();
   },
   methods: {
-    async fetchData() {
+    async fetchDaftarProvinsi() {
       try {
-        const response = await axios.get('https://emsifa.github.io/api-wilayah-indonesia/api/provinces.json');
-        this.provinces = response.data;
+        const response = await fetch("https://api.allorigins.win/get?url=https://emsifa.github.io/api-wilayah-indonesia/api/provinces.json");
+        const result = await response.json();
+        const data = JSON.parse(result.contents);
+        this.daftarProvinsi = data;
       } catch (error) {
-        console.error('Error fetching provinces:', error);
+        console.error("Error fetching daftar provinsi:", error);
       }
+    },
+    async getKotaByProvinsi() {
+      if (!this.selectedProvinsi) return;
 
       try {
-        const response = await axios.get('https://emsifa.github.io/api-wilayah-indonesia/api/cities.json');
-        this.cities = response.data;
+        const response = await fetch(`https://api.allorigins.win/get?url=https://emsifa.github.io/api-wilayah-indonesia/api/regencies/${this.selectedProvinsi}.json`);
+        const result = await response.json();
+        const data = JSON.parse(result.contents);
+        this.daftarKota = data;
       } catch (error) {
-        console.error('Error fetching cities:', error);
+        console.error("Error fetching kota by provinsi:", error);
       }
     },
-    getCityListByProvince(provinceId) {
-      return this.cities.filter(city => city.province_id === provinceId);
-    },
-    getProvinceNameByCity(cityId) {
-      const city = this.cities.find(city => city.id === cityId);
-      if (city) {
-        const province = this.provinces.find(province => province.id === city.province_id);
-        return province ? province.name : 'Provinsi tidak ditemukan';
+    async getProvinsiName(kotaId) {
+      try {
+        const response = await fetch(`https://api.allorigins.win/get?url=https://emsifa.github.io/api-wilayah-indonesia/api/regency/${kotaId}.json`);
+        const result = await response.json();
+        const data = JSON.parse(result.contents);
+        const provinceId = data.province_id;
+        
+        const provinceResponse = await fetch(`https://api.allorigins.win/get?url=https://emsifa.github.io/api-wilayah-indonesia/api/province/${provinceId}.json`);
+        const provinceResult = await provinceResponse.json();
+        const provinceData = JSON.parse(provinceResult.contents);
+        
+        return provinceData.name;
+      } catch (error) {
+        console.error("Error fetching provinsi name:", error);
       }
-      return 'Kota tidak ditemukan';
-    },
-    sortProvinces() {
-      this.provinces.sort((a, b) => {
-        const order = this.sortDirection === 'asc' ? 1 : -1;
-        return order * (a.id - b.id);
-      });
     }
   },
-  computed: {
-    sortedProvinces() {
-      return [...this.provinces];
-    }
-  }
 };
 </script>
 
-<style scoped>
-/* Tambahkan gaya sesuai keinginan untuk membuat tampilan menarik */
+<style>
+/* Optional CSS styling can be added here */
 </style>
